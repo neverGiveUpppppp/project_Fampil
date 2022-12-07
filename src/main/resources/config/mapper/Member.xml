@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fampill.api.mapper.MemberMapper">
+
+	<select id="selectMemberAccountCount" 
+		parameterType="String"
+		resultType="int"
+	>
+		SELECT COUNT(1)
+		FROM T_MEMBER
+		WHERE ACCOUNT = #{account}
+	</select>
+	
+	<!-- 회원 계정 조회 -->
+	<select id="selectMemberAccount" parameterType="String" 
+		resultType="com.fampill.api.domain.Member">
+		SELECT MEMBER_SEQ, ACCOUNT, PASSWORD, NICKNAME
+		FROM T_MEMBER
+		WHERE ACCOUNT = #{account}
+	</select>
+	
+	<insert id="insertMember" 
+		parameterType="com.fampill.api.domain.Member">
+		INSERT INTO T_MEMBER
+		(
+			ACCOUNT,
+			PASSWORD,
+			NICKNAME,
+			PROFILE_IMAGE_PATH,
+			PROFILE_IMAGE_NAME,
+			JOIN_DATE
+		)
+		VALUES
+		(
+			#{account},
+			#{password},
+			#{nickname},
+			#{profileImagePath},
+			#{profileImageName},
+			NOW()		
+		)
+	</insert>
+	
+</mapper>

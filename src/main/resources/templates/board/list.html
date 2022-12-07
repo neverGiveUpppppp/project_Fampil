@@ -1,0 +1,34 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/board-layout}">
+	<th:block layout:fragment="content">
+		<table class="table table-striped table-hover">
+		<thead>
+		<tr>
+			<th>번호</th>
+			<th>제목</th>
+			<th>작성자</th>
+			<th>등록일자</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:each="board : ${boardList}">
+			<td th:text="${board.boardSeq}">1</td>
+			<td>
+				<a th:href="@{/board/{boardType}/{boardSeq}(boardType=${boardType}, boardSeq=${board.boardSeq}, query=${param.query})}" th:text="${board.title}">
+					테스트
+				</a>
+			</td>
+			<td th:text="${board.userName}"></td>
+			<td th:text="${board.regDate}">2012-02-20</td>
+		</tr>
+		<tr th:if="${boardList.size() == 0}">
+			<td colspan="4">등록된 글이 없습니다.</td>
+		</tr>
+		</tbody>
+		</table>
+		<a th:href="@{/board/{boardType}/form(boardType=${boardType})}" class="btn btn-primary">등록</a>
+	</th:block>
+</body>
+</html>
