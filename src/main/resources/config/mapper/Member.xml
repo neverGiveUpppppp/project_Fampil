@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fampill.api.mapper.MemberMapper">
+
+	<!-- 인증번호 db에 저장 -->
+	<insert id="insertAuthNum" parameterType="Map">
+		INSERT INTO T_AUTH
+		(
+			HP
+			,AUTH_NUM
+			,REG_DATE
+		)
+		VALUES
+		(
+			#{hp}
+			,#{authNum}
+			,NOW()
+		)
+	</insert>
+	
+	<select id="selectAuthNum" parameterType="string" resultType="string">
+		SELECT AUTH_NUM FROM T_AUTH 
+		WHERE HP = #{hp} 
+		ORDER BY REG_DATE DESC 
+		LIMIT 1
+	</select>
+	
+	<!-- 계정중복체크 -->
+	<select id="selectMemberUserIdCount" 
+	parameterType="String"
+	resultType="int"
+	>
+		SELECT COUNT(1)
+		FROM T_MEMBER
+		WHERE USER_ID = #{userId}
+	</select>
+	
+		<insert id="insertMember" 
+		parameterType="com.fampill.api.domain.Member">
+		INSERT INTO T_MEMBER
+		(
+			USER_ID,
+			PASSWORD,
+			USERNAME,
+			HP,
+			AGREE1,
+			AGREE2,
+			AGREE3,
+			JOIN_DATE
+		)
+		VALUES
+		(
+			#{userId},
+			#{password},
+			#{username},
+			#{hp},
+			#{agree1},
+			#{agree2},
+			#{agree3},
+			NOW()		
+		)
+	</insert>
+	
+	<!-- 전화번호중복체크 -->
+	<select id="selectPhoneNumberChk" 
+	parameterType="String"
+	resultType="int"
+	>
+		SELECT COUNT(1)
+		FROM T_MEMBER
+		WHERE HP = #{hp}
+	</select>
+	
+	<!-- ////////////////////// -->
+
+
+	
+	<!-- 회원 계정 조회 -->
+	<select id="selectMemberAccount" parameterType="String" 
+		resultType="com.fampill.api.domain.Member">
+		SELECT MEMBER_SEQ, USER_ID, PASSWORD, USERNAME
+		FROM T_MEMBER
+		WHERE USER_ID = #{userId}
+	</select>
+	
+	<select id="selectMemberByMemberSeq" parameterType="int" 
+		resultType="com.fampill.api.domain.Member">
+		SELECT MEMBER_SEQ, USER_ID, PASSWORD, USERNAME
+		FROM T_MEMBER
+		WHERE MEMBER_SEQ = #{memberSeq}
+	</select>
+	
+
+	
+</mapper>

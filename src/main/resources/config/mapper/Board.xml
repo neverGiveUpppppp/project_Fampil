@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fampill.api.mapper.BoardMapper">
+
+
+	<resultMap type="com.fampill.api.domain.Board" id="selectBoardList">
+		<result column="BOARD_TYPE" property="boardType"
+			typeHandler="com.fampill.api.mybatis.typehandler.BoardTypeHandler"/>
+	</resultMap>
+
+	<resultMap type="com.fampill.api.domain.Board" id="selectRegPillList">
+	</resultMap>
+	
+	<select id="selectPill" parameterType="int" resultType="com.fampill.api.domain.Fampill">
+		SELECT 
+		  PILL_NO
+          ,PILL_NAME
+          ,PILL_IMG
+          ,MFR
+		FROM 
+		T_PILL_LIST
+		WHERE PILL_NO = #{pillNo}
+	</select>
+
+	<!-- 등록한 영양제 목록 조회 -->
+	<select id="selectRegPillList" parameterType="string" resultType="com.fampill.api.controller.form.PillSaveForm" >
+		SELECT * 
+		FROM 
+		T_PILL_MASTER
+		WHERE USER_ID = #{userId}
+	</select>
+	
+	<select id="selectPillTimeList" parameterType="Map" resultType="com.fampill.api.domain.FampillTime">
+	SELECT 
+		MAIN.TIME_NO
+		,MAIN.REG_NO
+		,PILL_FULL_NAME
+		,HOURTYPE
+		,HOUR
+		,MINUTE
+		,CAPSULE
+		,IFNULL(TAKE_NO,FALSE) AS TAKE_YN
+	 FROM (
+		SELECT 
+			(SELECT PILL_FULL_NAME FROM T_PILL_LIST WHERE PILL_NO = MASTER.PILL_NO)	AS PILL_FULL_NAME
+			,TIME.HOURTYPE
+			,TIME.HOUR
+			,TIME.MINUTE
+			,TIME.CAPSULE
+			,TIME.TIME_NO
+			,MASTER.USER_ID
+			,MASTER.REG_NO
+		 FROM T_PILL_MASTER MASTER, T_PILL_TIME TIME
+		 WHERE MASTER.REG_NO = TIME.REG_NO 
+		 	AND MASTER.USER_ID = TIME.USER_ID 
+		 	<if test="'Mon'.equals(weekLabel)">
+				AND MASTER.MON= 1
+			</if>
+			<if test="'Tue'.equals(weekLabel)">
+				and MASTER.TUE = 1
+			</if>
+			<if test="'Wed'.equals(weekLabel)">
+				and MASTER.WED = 1
+			</if>
+			<if test="'Thu'.equals(weekLabel)">
+				and MASTER.THU = 1
+			</if>
+			<if test="'Fri'.equals(weekLabel)">
+				and MASTER.FRI = 1
+			</if>
+			<if test="'Sat'.equals(weekLabel)">
+				and MASTER.SAT = 1
+			</if>
+			<if test="'Sun'.equals(weekLabel)">
+				and MASTER.SUN = 1
+			</if>
+			AND MASTER.USER_ID = #{userId}
+		) AS MAIN LEFT OUTER JOIN T_PILL_TAKE TAKE
+			ON MAIN.TIME_NO = TAKE.TIME_NO
+				AND MAIN.USER_ID = TAKE.USER_ID
+				AND MAIN.REG_NO = TAKE.REG_NO
+				AND MAIN.USER_ID = #{userId}
+				AND TAKE.REG_DATE = #{regDate}
+			ORDER BY HOURTYPE, HOUR, MINUTE, PILL_FULL_NAME ASC
+	</select>
+	
+	<select id="selectMyList" parameterType="string" resultType="com.fampill.api.controller.form.PillSaveForm">
+		SELECT
+			REG_NO 
+			,PILL_NO
+			,(SELECT PILL_NAME FROM T_PILL_LIST WHERE PILL_NO = MASTER.PILL_NO) AS PILL_NAME
+			,(SELECT MFR FROM T_PILL_LIST WHERE PILL_NO = MASTER.PILL_NO) AS MFR
+			,MON
+			,TUE
+			,WED
+			,THU
+			,FRI
+			,SAT
+			,SUN	
+			,HOURTYPE1
+			,HOUR1
+			,MINUTE1
+			,CAPSULE1
+			,HOURTYPE2
+			,HOUR2
+			,MINUTE2
+			,CAPSULE2
+			,HOURTYPE3
+			,HOUR3
+			,MINUTE3
+			,CAPSULE3
+		FROM T_PILL_MASTER MASTER 
+		WHERE USER_ID= #{userId}
+	</select>
+	
+	<!-- 영양제 섭취기록 -->
+	<select id="selectpillTake" parameterType="com.fampill.api.domain.FampillTake" resultType="int">
+		select count(*) 
+		from T_PILL_TAKE 
+		WHERE USER_ID = #{userId} 
+		and REG_DATE = #{regDate}
+	</select>
+	
+	<!-- 영양제검색 -->
+	<select id="selectSearchList" parameterType="string" resultType="com.fampill.api.domain.Fampill">
+		SELECT
+			PILL_NO
+			,PILL_NAME
+			,PILL_IMG
+			,MFR
+			,PILL_FULL_NAME
+		FROM T_PILL_LIST
+		<if test="searchWord != null and searchWord.length() > 0">
+		WHERE 
+			PILL_FULL_NAME LIKE CONCAT('%', CONCAT(#{ searchWord }, '%'))
+		</if>
+		ORDER BY PILL_FULL_NAME ASC
+	</select>
+	
+	<select id="selectDatail" parameterType="int" resultType="com.fampill.api.domain.Fampill">
+		SELECT
+			PILL_NO
+			,PILL_NAME
+			,PILL_IMG
+			,MFR
+			,PILL_IMG_DTL
+			,CAPACITY
+			,Pill_FULL_NAME
+		FROM T_PILL_LIST
+		WHERE 
+			PILL_NO = #{pillNo}
+	</select>
+	
+	<!-- 게시물 등록 쿼리 -->
+	<insert id="insertPill" parameterType="com.fampill.api.controller.form.PillSaveForm">
+		INSERT INTO T_PILL_MASTER
+		(
+			USER_ID
+			,PILL_NO
+			,MON
+			,TUE
+			,WED
+			,THU
+			,FRI
+			,SAT
+			,SUN
+			,HOURTYPE1
+			,HOUR1
+			,MINUTE1
+			,CAPSULE1
+			,HOURTYPE2
+			,HOUR2
+			,MINUTE2
+			,CAPSULE2
+			,HOURTYPE3
+			,HOUR3
+			,MINUTE3
+			,CAPSULE3
+			,REG_DATE		
+		)
+		VALUES
+		(
+			#{userId}
+			,#{pillNo}
+			,#{mon}
+			,#{tue}
+			,#{wed}
+			,#{thu}
+			,#{fri}
+			,#{sat}
+			,#{sun}
+			,#{hourtype1}
+			,#{hour1}
+			,#{minute1}
+			,#{capsule1}
+			,#{hourtype2}
+			,#{hour2}
+			,#{minute2}
+			,#{capsule2}
+			,#{hourtype3}
+			,#{hour3}
+			,#{minute3}
+			,#{capsule3}			
+			,NOW()	
+		)
+	</insert>
+	
+	<!-- t_pill_master 테이블의 시간값을 t_pill_time으로 복사-->
+	<select id="selectPillTimeInfo" parameterType="String" resultType="com.fampill.api.controller.form.PillSaveForm">
+		SELECT 
+			REG_NO
+			,USER_ID
+			,PILL_NO
+			,HOURTYPE1
+			,HOUR1
+			,MINUTE1
+			,CAPSULE1
+			,HOURTYPE2
+			,HOUR2
+			,MINUTE2
+			,CAPSULE2
+			,HOURTYPE3
+			,HOUR3
+			,MINUTE3
+			,CAPSULE3
+		FROM T_PILL_MASTER
+		WHERE USER_ID = #{userId}
+			ORDER By REG_NO DESC 
+			limit 1
+	</select>
+
+	<!-- t_pill_master 테이블의 시간값을 t_pill_time으로 삽입-->
+	<insert id="insertTime"  parameterType="com.fampill.api.domain.FampillTime">
+		INSERT INTO T_PILL_TIME
+		(
+			REG_NO
+			,USER_ID
+			,PILL_NO
+			,HOURTYPE
+			,HOUR
+			,MINUTE
+			,CAPSULE
+		)
+		VALUES
+		(
+			#{regNo}
+			,#{userId}
+			,#{pillNo}
+			,#{hourtype}
+			,#{hour}
+			,#{minute}
+			,#{capsule}
+		)
+	</insert>
+	
+	<!-- 약섭취이력등록 -->
+	<insert id="insertPillTake"  parameterType="com.fampill.api.domain.FampillTake">
+		INSERT INTO T_PILL_TAKE
+		(
+			REG_NO
+			,USER_ID
+			,TIME_NO
+			,TAKE_YN
+			,REG_DATE
+		)
+		VALUES
+		(
+			#{regNo}
+			,#{userId}
+			,#{timeNo}
+			,1
+			,#{regDate}
+		)
+	</insert>
+	
+	<!-- 약섭취이력삭제 -->
+	<delete id="deletePillTakeHis" parameterType="com.fampill.api.domain.FampillTake">
+		DELETE FROM T_PILL_TAKE
+		WHERE TIME_NO = #{timeNo} 
+		and USER_ID = #{userId}
+		and REG_DATE = #{regDate}
+	</delete>
+	
+	<select id="selectPillTake"  parameterType="com.fampill.api.domain.FampillTake" resultType="int">
+		SELECT COUNT(*) 
+		FROM T_PILL_TAKE
+		WHERE 
+			TIME_NO = #{timeNo}
+			and USER_ID = #{userId}
+			and REG_DATE = #{regDate}
+	</select>	
+	
+	<!-- 삭제시 reg_no를 기준으로 master테이블에서 삭제 -->
+	<delete id="deletePillMaster" parameterType="int">
+		DELETE FROM T_PILL_MASTER
+		WHERE REG_NO = #{regNo}
+	</delete>
+	
+	<!-- 삭제시 reg_no를 기준으로 time테이블에서 삭제 -->
+	<delete id="deletePillTime" parameterType="int">
+		DELETE FROM T_PILL_TIME
+		WHERE REG_NO = #{regNo}
+	</delete>
+	
+	<!-- 삭제시 reg_no를 기준으로 take테이블에서 삭제 -->
+	<delete id="deletePillTake" parameterType="int">
+		DELETE FROM T_PILL_TAKE
+		WHERE REG_NO = #{regNo}
+	</delete>
+	
+	<!-- 컨디션상태등록되어있는지 체크 -->
+	<select id="selectCondition" parameterType="Map" resultType="int">
+		SELECT COUNT(*) 
+		FROM T_CONDITION
+		WHERE USER_ID = #{userId}
+		and REG_DATE = #{regDate}
+	</select>
+	
+	<insert id="insertCondition" parameterType="Map" >
+		INSERT INTO T_CONDITION
+		(
+			USER_ID
+			,STATUS
+			,REG_DATE
+		)
+		VALUES
+		(
+			#{userId}
+			,#{status}
+			,#{regDate}
+		)
+	</insert>
+	
+	<delete id="deleteCondition" parameterType="Map">
+		DELETE FROM T_CONDITION
+		WHERE USER_ID = #{userId}
+		and REG_DATE = #{regDate}
+	</delete>
+	
+	<select id="selectPillcountDay" parameterType="Map" resultType="int">
+		SELECT COUNT(DISTINCT(REG_DATE)) 
+		FROM T_PILL_TAKE 
+		WHERE REG_DATE 
+		BETWEEN (SELECT DATE_FORMAT(NOW(), #{countDayFormat1})) 
+		AND (SELECT DATE_FORMAT(NOW(), #{countDayFormat2}))
+		AND USER_ID = #{userId}
+	</select>
+	
+	<select id="selectMyCondition" parameterType="Map" resultType="int">
+		SELECT 
+		STATUS
+		FROM T_CONDITION
+		WHERE USER_ID = #{userId}
+		AND REG_DATE = #{regDate}
+	</select>
+	
+<!--////////////////////////////////////////////////////////////////  -->
+
+	<!-- 게시물 목록 쿼리 -->
+	<select id="selectBoardList" resultMap="selectBoardList">
+		SELECT BOARD_SEQ, BOARD_TYPE, TITLE, REG_DATE 
+		FROM T_BOARD
+		<!-- 게시글 종류 조건-->
+		WHERE BOARD_TYPE = #{boardType.code}
+		<!-- 검색어가 있는경우 제목 LIKE 검색 -->
+		<if test="query != null and query.length() > 0">
+		AND TITLE LIKE CONCAT('%', CONCAT(#{query}, '%'))
+		</if>
+		ORDER BY REG_DATE DESC
+	</select>
+	
+	<!-- 게시물 상세 쿼리 1:1 데이터 조회 -->
+	<select id="selectBoard" parameterType="int" resultMap="selectBoardList">
+		SELECT 
+			BOARD_SEQ, BOARD_TYPE, TITLE, CONTENTS, USER_NAME, MEMBER_SEQ, REG_DATE 
+		FROM T_BOARD
+		WHERE BOARD_SEQ = #{boardSeq}
+	</select>	
+	
+	<!-- 게시물 등록 쿼리 -->
+	<insert id="insertBoard" parameterType="com.fampill.api.domain.Board"
+		useGeneratedKeys="true" keyProperty="boardSeq"
+		>
+		INSERT INTO T_BOARD
+		(
+			BOARD_TYPE,
+			TITLE,
+			CONTENTS,
+			USER_NAME,
+			MEMBER_SEQ,
+			REG_DATE		
+		)
+		VALUES
+		(
+			#{boardType.code},
+			#{title},
+			#{contents},
+			#{userName},
+			#{memberSeq},
+			NOW()	
+		)
+	</insert>
+	
+	<!-- 게시물 업데이트 쿼리 -->
+	<update id="updateBoard" parameterType="com.fampill.api.domain.Board">
+		UPDATE T_BOARD
+		SET
+			TITLE = #{title},
+			CONTENTS = #{contents},
+			USER_NAME = #{userName}
+		WHERE BOARD_SEQ = #{boardSeq}
+	</update>	
+	
+	<!-- 게시물 삭제 쿼리 -->
+	<delete id="deleteBoard" parameterType="int">
+		DELETE FROM T_BOARD
+		WHERE BOARD_SEQ = #{boardSeq}
+	</delete>
+	
+</mapper>
