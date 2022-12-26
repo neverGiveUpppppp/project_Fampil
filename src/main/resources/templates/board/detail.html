@@ -1,0 +1,61 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/board-layout}">
+	<th:block layout:fragment="css">
+	</th:block>
+	<th:block layout:fragment="content">
+		<div class="card">
+		  <div class="card-header" th:text="${board.title}">Featured</div>
+		  <div class="card-body">
+			<h5 class="card-title">
+				[[${board.userName}]]
+				<span class="badge text-bg-info" th:text="${board.regDate}">Primary</span>
+			</h5>
+		    <p class="card-text" th:text="${board.contents}">내용이다..</p>
+		  </div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<a th:href="@{/board/{boardType}(boardType=${board.boardType}, query=${param.query})}"
+					class="btn btn-secondary">목록</a>
+			</div>
+			<div class="col-md-auto"></div>
+			<div class="col col-lg-2 text-align-right">
+				<a
+					th:href="@{/board/{boardType}/edit/{boardSeq}(boardType=${board.boardType}, boardSeq=${board.boardSeq}, query=${param.query})}"
+					class="btn btn-primary">수정</a> <a
+					href="javascript:handleDelete();" class="btn btn-danger">삭제</a>
+			</div>
+		</div>
+	</th:block>
+	<!-- index.html 고유 스크립트 추가 -->
+	<th:block layout:fragment="script">
+		<script th:inline="javascript">
+		var boardSeq = [[${board.boardSeq}]];
+		var boardType = [[${board.boardType}]];
+		var csrfName = [[${_csrf.parameterName}]];
+		var csrfToken = [[${_csrf.token}]];
+		function handleDelete(url) {
+			if (confirm('정말 삭제하시겠습니까?')) {
+				$.ajax({
+					url: '/board/delete',
+					type: 'post',
+					data: {
+						boardSeq: boardSeq,
+						[csrfName]: csrfToken
+					},
+					success: function(data) {
+						alert('게시글이 삭제되었습니다.');
+						location.href = '/board/' + boardType;
+					},
+					error: function(data) {
+						alert(data.responseJSON.message);
+					}
+				});
+			}
+		}
+		</script>
+	</th:block>		
+</body>
+</html>

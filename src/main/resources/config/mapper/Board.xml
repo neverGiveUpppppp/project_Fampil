@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fampill.api.mapper.BoardMapper">
+
+	<resultMap type="com.fampill.api.domain.Board" id="selectBoardList">
+		<result column="BOARD_TYPE" property="boardType"
+			typeHandler="com.fampill.api.mybatis.typehandler.BoardTypeHandler"/>
+	</resultMap>
+
+	<!-- 게시물 목록 쿼리 -->
+	<select id="selectBoardList" resultMap="selectBoardList">
+		SELECT BOARD_SEQ, BOARD_TYPE, TITLE, REG_DATE 
+		FROM T_BOARD
+		<!-- 게시글 종류 조건-->
+		WHERE BOARD_TYPE = #{boardType.code}
+		<!-- 검색어가 있는경우 제목 LIKE 검색 -->
+		<if test="query != null and query.length() > 0">
+		AND TITLE LIKE CONCAT('%', CONCAT(#{query}, '%'))
+		</if>
+		ORDER BY REG_DATE DESC
+	</select>
+	
+	<!-- 게시물 상세 쿼리 1:1 데이터 조회 -->
+	<select id="selectBoard" parameterType="int" resultMap="selectBoardList">
+		SELECT 
+			BOARD_SEQ, BOARD_TYPE, TITLE, CONTENTS, USER_NAME, MEMBER_SEQ, REG_DATE 
+		FROM T_BOARD
+		WHERE BOARD_SEQ = #{boardSeq}
+	</select>	
+	
+	<!-- 게시물 등록 쿼리 -->
+	<insert id="insertBoard" parameterType="com.fampill.api.domain.Board"
+		useGeneratedKeys="true" keyProperty="boardSeq"
+		>
+		INSERT INTO T_BOARD
+		(
+			BOARD_TYPE,
+			TITLE,
+			CONTENTS,
+			USER_NAME,
+			MEMBER_SEQ,
+			REG_DATE		
+		)
+		VALUES
+		(
+			#{boardType.code},
+			#{title},
+			#{contents},
+			#{userName},
+			#{memberSeq},
+			NOW()	
+		)
+	</insert>
+	
+	<!-- 게시물 업데이트 쿼리 -->
+	<update id="updateBoard" parameterType="com.fampill.api.domain.Board">
+		UPDATE T_BOARD
+		SET
+			TITLE = #{title},
+			CONTENTS = #{contents},
+			USER_NAME = #{userName}
+		WHERE BOARD_SEQ = #{boardSeq}
+	</update>	
+	
+	<!-- 게시물 삭제 쿼리 -->
+	<delete id="deleteBoard" parameterType="int">
+		DELETE FROM T_BOARD
+		WHERE BOARD_SEQ = #{boardSeq}
+	</delete>
+	
+</mapper>

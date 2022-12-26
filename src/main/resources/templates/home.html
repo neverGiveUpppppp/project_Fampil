@@ -1,0 +1,12 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layouts/default-layout}">
+	<th:block layout:fragment="content">
+		<p>Spring Boot.</p>
+		<th:block th:if="${details != null}">
+		<p >로그인 회원 아이디 : [[${details.username}]]</p>
+		<p >로그인 회원 닉네임 : [[${details.nickname}]]</p>
+		</th:block>
+	</th:block>	
+</body>
+</html>
